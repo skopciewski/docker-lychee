@@ -60,7 +60,7 @@ WORKDIR /var/www
 RUN git clone https://github.com/electerious/Lychee.git lychee
 RUN chown -R www-data:www-data /var/www/lychee
 RUN chmod -R 770 /var/www/lychee
-RUN mkdir /var/www/lychee/uploads/big /var/www/lychee/uploads/medium /var/www/lychee/uploads/thumb
+RUN mkdir -p /var/www/lychee/uploads/big /var/www/lychee/uploads/medium /var/www/lychee/uploads/thumb
 RUN chmod -R 777 /var/www/lychee/uploads/
 RUN chmod -R 777 /var/www/lychee/uploads/*
 RUN chmod -R 777 /var/www/lychee/data/
