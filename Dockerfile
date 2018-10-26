@@ -5,6 +5,13 @@
 FROM kdelfour/supervisor-docker
 MAINTAINER Kevin Delfour <kevin@delfour.eu>
 
+#
+# ldq: work around mysql not starting correctly, adding more php.ini configuration
+#
+#               docker build --force-rm=true --no-cache -t ldq/lychee:latest .
+#
+#
+
 # ------------------------------------------------------------------------------
 # Install base
 RUN apt-get update
@@ -16,11 +23,10 @@ RUN apt-get install -yq wget git unzip nginx fontconfig-config fonts-dejavu-core
 # ------------------------------------------------------------------------------
 # Configure mysql
 RUN sed -i -e"s/^bind-address\s*=\s*127.0.0.1/bind-address = 0.0.0.0/" /etc/mysql/my.cnf
-RUN service mysql start && \
-    mysql -uroot -e "CREATE DATABASE IF NOT EXISTS lychee;" && \
-    mysql -uroot -e "CREATE USER 'lychee'@'localhost' IDENTIFIED BY 'lychee';" && \
-    mysql -uroot -e "GRANT ALL PRIVILEGES ON *.* TO 'lychee'@'localhost' WITH GRANT OPTION;" && \
-    mysql -uroot -e "FLUSH PRIVILEGES;"
+RUN find /var/lib/mysql -type f -exec touch {} \; && service mysql start && \
+    mysql -uroot -e "CREATE DATABASE lychee;" && \
+    mysql -uroot -e "CREATE USER lychee;" && \
+    mysql -uroot -e "GRANT ALL ON lychee.* TO 'lychee'@'localhost' IDENTIFIED BY 'lychee';"
 RUN mkdir /var/lib/mysql_init && \
     mv /var/lib/mysql/* /var/lib/mysql_init
     
@@ -28,6 +34,8 @@ RUN mkdir /var/lib/mysql_init && \
 # Configure php-fpm
 RUN sed -i -e "s/output_buffering\s*=\s*4096/output_buffering = Off/g" /etc/php5/fpm/php.ini
 RUN sed -i -e "s/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/g" /etc/php5/fpm/php.ini
+RUN sed -i -e "s/max_execution_time\s*=\s*30/max_execution_time = 200/g" /etc/php5/fpm/php.ini
+RUN sed -i -e "s/memory_limit\s*=\s*128M/memory_limit = 256M/g" /etc/php5/fpm/php.ini
 RUN sed -i -e "s/upload_max_filesize\s*=\s*2M/upload_max_filesize = 1G/g" /etc/php5/fpm/php.ini
 RUN sed -i -e "s/post_max_size\s*=\s*8M/post_max_size = 1G/g" /etc/php5/fpm/php.ini
 RUN sed -i -e "s:;\s*session.save_path\s*=\s*\"N;/path\":session.save_path = /tmp:g" /etc/php5/fpm/php.ini
